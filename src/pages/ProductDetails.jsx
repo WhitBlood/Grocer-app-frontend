@@ -20,6 +20,9 @@ const ProductDetails = () => {
     const foundProduct = getProductById(id)
     if (foundProduct) {
       setProduct(foundProduct)
+      document.title = `🛍️ ${foundProduct.name} | FreshMart`
+    } else {
+      document.title = '🔍 Product Not Found | FreshMart'
     }
     setIsLoading(false)
   }, [id])

@@ -1,0 +1,22 @@
+{
+    "name": "FreshMart - Premium Grocery Experience",
+    "short_name": "FreshMart",
+    "description": "Premium groceries delivered fresh to your doorstep",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "/favicon.ico",
+            "sizes": "32x32",
+            "type": "image/x-icon"
+        }
+    ],
+    "theme_color": "#059669",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "start_url": "/",
+    "scope": "/"
+}

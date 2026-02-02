@@ -1,8 +1,11 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 const About = () => {
+  useEffect(() => {
+    document.title = '🍃 About Us | FreshMart - Premium Grocery Experience'
+  }, [])
   const TEAM_MEMBERS = [
     {
       name: 'Arjun Sharma',

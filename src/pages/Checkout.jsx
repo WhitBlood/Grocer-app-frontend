@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -17,6 +17,10 @@ const Checkout = () => {
     pincode: ''
   })
   const [paymentMethod, setPaymentMethod] = useState('card')
+
+  useEffect(() => {
+    document.title = '🛒 Checkout | FreshMart - Premium Grocery Experience'
+  }, [])
 
   const subtotal = getTotalPrice()
   const deliveryFee = subtotal > 500 ? 0 : 49

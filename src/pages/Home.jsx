@@ -16,6 +16,7 @@ const Home = () => {
   const { addToCart } = useCart()
 
   useEffect(() => {
+    document.title = '🍃 FreshMart | Premium Grocery Experience'
     // Simulate loading
     setTimeout(() => setIsLoading(false), 1000)
   }, [])

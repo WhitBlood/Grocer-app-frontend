@@ -1,10 +1,14 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 const NotFound = () => {
   const navigate = useNavigate()
+
+  useEffect(() => {
+    document.title = '❌ Page Not Found | FreshMart'
+  }, [])
 
   return (
     <div className="min-h-screen">
