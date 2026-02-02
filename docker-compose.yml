@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  freshmart-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: freshmart-app
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - freshmart-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      timeout: 5s
+      interval: 30s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a reverse proxy (uncomment if needed)
+  # nginx-proxy:
+  #   image: nginx:alpine
+  #   container_name: freshmart-proxy
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./proxy.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - freshmart-frontend
+  #   networks:
+  #     - freshmart-network
+
+networks:
+  freshmart-network:
+    driver: bridge
+
+volumes:
+  freshmart-data:
