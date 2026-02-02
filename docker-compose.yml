@@ -14,25 +14,23 @@ services:
     networks:
       - freshmart-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       timeout: 5s
       interval: 30s
       retries: 3
       start_period: 40s
 
-  # Optional: Add a reverse proxy (uncomment if needed)
-  # nginx-proxy:
-  #   image: nginx:alpine
-  #   container_name: freshmart-proxy
+  # Alternative simple build (uncomment to use)
+  # freshmart-simple:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.simple
+  #   container_name: freshmart-simple
   #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./proxy.conf:/etc/nginx/nginx.conf:ro
-  #   depends_on:
-  #     - freshmart-frontend
-  #   networks:
-  #     - freshmart-network
+  #     - "3000:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #   restart: unless-stopped
 
 networks:
   freshmart-network:

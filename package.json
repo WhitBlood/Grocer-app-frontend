@@ -2,6 +2,7 @@
   "name": "freshmart-frontend",
   "version": "1.0.0",
   "description": "FreshMart - Premium Grocery E-commerce Platform",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
