@@ -29,6 +29,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Test nginx configuration
+RUN nginx -t
+
 # Expose port 80
 EXPOSE 80
 

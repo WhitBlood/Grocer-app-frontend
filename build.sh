@@ -22,23 +22,35 @@ npm run build
 if [ $? -eq 0 ]; then
     echo "✅ Local build successful!"
     
-    # Build Docker image
-    echo "🐳 Building Docker image..."
-    docker build -t freshmart-frontend .
-
-    # Check if Docker build was successful
+    # Test nginx configuration
+    echo "🔧 Testing nginx configuration..."
+    docker run --rm -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf nginx:alpine nginx -t
+    
     if [ $? -eq 0 ]; then
-        echo "✅ Docker build successful!"
-        echo "🚀 To run the container:"
-        echo "   docker run -p 3000:80 freshmart-frontend"
-        echo ""
-        echo "🐳 Or use docker-compose:"
-        echo "   docker-compose up"
+        echo "✅ Nginx configuration is valid!"
+        
+        # Build Docker image
+        echo "🐳 Building Docker image..."
+        docker build -t freshmart-frontend .
+
+        # Check if Docker build was successful
+        if [ $? -eq 0 ]; then
+            echo "✅ Docker build successful!"
+            echo "🚀 To run the container:"
+            echo "   docker run -p 3000:80 freshmart-frontend"
+            echo ""
+            echo "🐳 Or use docker-compose:"
+            echo "   docker-compose up"
+        else
+            echo "❌ Docker build failed!"
+            echo "💡 Try using the simple nginx Dockerfile:"
+            echo "   docker build -f Dockerfile.nginx-simple -t freshmart-simple ."
+        fi
     else
-        echo "❌ Docker build failed!"
-        echo "💡 Try using the simple Dockerfile:"
-        echo "   docker build -f Dockerfile.simple -t freshmart-simple ."
-        echo "   docker run -p 3000:3000 freshmart-simple"
+        echo "❌ Nginx configuration is invalid!"
+        echo "💡 Using simple nginx configuration..."
+        docker build -f Dockerfile.nginx-simple -t freshmart-simple .
+        echo "🚀 Run with: docker run -p 3000:80 freshmart-simple"
     fi
 else
     echo "❌ Local build failed!"
