@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import LoadingSpinner from '../components/LoadingSpinner'
+import LoginPromptModal from '../components/LoginPromptModal'
 import { getProductById } from '../data/products'
 import { useCart } from '../context/CartContext'
 
@@ -15,6 +16,7 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState('description')
   const [isLoading, setIsLoading] = useState(true)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   useEffect(() => {
     const foundProduct = getProductById(id)
@@ -29,20 +31,25 @@ const ProductDetails = () => {
 
   const handleAddToCart = () => {
     if (product) {
-      addToCart(product, quantity)
+      const success = addToCart(product, quantity, () => {
+        // This callback is called when user is not logged in
+        setShowLoginModal(true)
+      })
       
-      // Show notification
-      const notification = document.createElement('div')
-      notification.className = 'notification'
-      notification.innerHTML = `
-        <i class="fas fa-check-circle mr-2"></i>
-        ${quantity} ${product.name} added to cart!
-      `
-      document.body.appendChild(notification)
-      
-      setTimeout(() => {
-        document.body.removeChild(notification)
-      }, 3000)
+      if (success) {
+        // Show notification only if item was added successfully
+        const notification = document.createElement('div')
+        notification.className = 'notification'
+        notification.innerHTML = `
+          <i class="fas fa-check-circle mr-2"></i>
+          ${quantity} ${product.name} added to cart!
+        `
+        document.body.appendChild(notification)
+        
+        setTimeout(() => {
+          document.body.removeChild(notification)
+        }, 3000)
+      }
     }
   }
 

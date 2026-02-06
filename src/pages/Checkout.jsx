@@ -8,18 +8,40 @@ const Checkout = () => {
   const navigate = useNavigate()
   const { cart, updateQuantity, removeFromCart, clearCart, getTotalPrice } = useCart()
   const [showSuccess, setShowSuccess] = useState(false)
+  const [savedAddresses, setSavedAddresses] = useState([])
+  const [selectedAddressId, setSelectedAddressId] = useState(null)
+  const [useNewAddress, setUseNewAddress] = useState(false)
+  const [newAddress, setNewAddress] = useState({
+    street: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: 'India'
+  })
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     email: '',
-    phone: '',
-    address: '',
-    city: '',
-    pincode: ''
+    phone: ''
   })
   const [paymentMethod, setPaymentMethod] = useState('card')
 
   useEffect(() => {
     document.title = '🛒 Checkout | FreshMart - Premium Grocery Experience'
+    
+    // Load saved addresses
+    const addresses = JSON.parse(localStorage.getItem('freshmart_addresses')) || []
+    setSavedAddresses(addresses)
+    
+    // If no addresses, enable new address form
+    if (addresses.length === 0) {
+      setUseNewAddress(true)
+    } else {
+      // Auto-select default address
+      const defaultAddress = addresses.find(addr => addr.is_default)
+      if (defaultAddress) {
+        setSelectedAddressId(defaultAddress.id)
+      }
+    }
   }, [])
 
   const subtotal = getTotalPrice()
@@ -29,11 +51,30 @@ const Checkout = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    
+    // Validate address selection or new address entry
+    if (!useNewAddress && !selectedAddressId) {
+      alert('Please select a delivery address')
+      return
+    }
+    
+    if (useNewAddress && (!newAddress.street || !newAddress.city || !newAddress.state || !newAddress.postal_code)) {
+      alert('Please fill in all address fields')
+      return
+    }
+    
     setShowSuccess(true)
     setTimeout(() => {
       clearCart()
       navigate('/')
     }, 3000)
+  }
+
+  const handleNewAddressChange = (e) => {
+    setNewAddress({
+      ...newAddress,
+      [e.target.name]: e.target.value
+    })
   }
 
   const handleInputChange = (e) => {
@@ -126,6 +167,246 @@ const Checkout = () => {
                 </div>
               </div>
 
+              {/* Delivery Address Selection */}
+              <div className="card">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold dark:text-white flex items-center gap-2">
+                    <i className="fas fa-map-marker-alt text-primary"></i>
+                    Delivery Address
+                  </h3>
+                  {savedAddresses.length > 0 && (
+                    <button
+                      onClick={() => navigate('/my-addresses')}
+                      className="text-sm text-primary hover:text-primary/80 font-semibold"
+                    >
+                      <i className="fas fa-cog mr-1"></i>
+                      Manage Addresses
+                    </button>
+                  )}
+                </div>
+
+                {savedAddresses.length === 0 ? (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 px-4 py-3 rounded-xl flex items-start gap-3">
+                      <i className="fas fa-info-circle mt-0.5"></i>
+                      <div>
+                        <p className="font-semibold mb-1">No saved addresses</p>
+                        <p className="text-sm">Enter your delivery address below or save it for future orders.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => navigate('/my-addresses')}
+                        className="flex-1 py-3 px-4 border-2 border-primary text-primary font-bold rounded-xl hover:bg-primary hover:text-white transition-all"
+                      >
+                        <i className="fas fa-plus mr-2"></i>
+                        Save Address for Future
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Saved Addresses */}
+                    <div className="space-y-3">
+                      {savedAddresses.map((address) => (
+                        <div
+                          key={address.id}
+                          onClick={() => {
+                            setSelectedAddressId(address.id)
+                            setUseNewAddress(false)
+                          }}
+                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                            !useNewAddress && selectedAddressId === address.id
+                              ? 'border-primary bg-primary/5'
+                              : 'border-gray-200 dark:border-slate-600 hover:border-primary/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="radio"
+                              name="address"
+                              checked={!useNewAddress && selectedAddressId === address.id}
+                              onChange={() => {
+                                setSelectedAddressId(address.id)
+                                setUseNewAddress(false)
+                              }}
+                              className="mt-1"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="font-bold text-gray-900 dark:text-white">
+                                  {address.label}
+                                </span>
+                                {address.is_default && (
+                                  <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
+                                {address.street}, {address.city}, {address.state} {address.postal_code}
+                              </p>
+                              {address.delivery_instructions && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                                  Note: {address.delivery_instructions}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Use Different Address Option */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300 dark:border-slate-600"></div>
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-4 bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400">
+                          Or
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      onClick={() => setUseNewAddress(true)}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        useNewAddress
+                          ? 'border-primary bg-primary/5'
+                          : 'border-gray-200 dark:border-slate-600 hover:border-primary/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="address"
+                          checked={useNewAddress}
+                          onChange={() => setUseNewAddress(true)}
+                        />
+                        <div>
+                          <span className="font-bold text-gray-900 dark:text-white">
+                            <i className="fas fa-plus-circle mr-2 text-primary"></i>
+                            Use a different address
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* New Address Form */}
+                {useNewAddress && (
+                  <div className="mt-6 p-6 bg-gray-50 dark:bg-slate-700/50 rounded-xl space-y-4">
+                    <h4 className="font-bold text-gray-900 dark:text-white mb-4">
+                      Enter Delivery Address
+                    </h4>
+                    
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                        <i className="fas fa-map-marker-alt mr-2 text-primary"></i>
+                        Street Address *
+                      </label>
+                      <input
+                        type="text"
+                        name="street"
+                        value={newAddress.street}
+                        onChange={handleNewAddressChange}
+                        className="input-field"
+                        placeholder="123 Main Street, Apartment 4B"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                          <i className="fas fa-city mr-2 text-primary"></i>
+                          City *
+                        </label>
+                        <input
+                          type="text"
+                          name="city"
+                          value={newAddress.city}
+                          onChange={handleNewAddressChange}
+                          className="input-field"
+                          placeholder="Mumbai"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                          <i className="fas fa-map mr-2 text-primary"></i>
+                          State *
+                        </label>
+                        <input
+                          type="text"
+                          name="state"
+                          value={newAddress.state}
+                          onChange={handleNewAddressChange}
+                          className="input-field"
+                          placeholder="Maharashtra"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                          <i className="fas fa-mail-bulk mr-2 text-primary"></i>
+                          Postal Code *
+                        </label>
+                        <input
+                          type="text"
+                          name="postal_code"
+                          value={newAddress.postal_code}
+                          onChange={handleNewAddressChange}
+                          className="input-field"
+                          placeholder="400001"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                        <i className="fas fa-globe mr-2 text-primary"></i>
+                        Country *
+                      </label>
+                      <input
+                        type="text"
+                        name="country"
+                        value={newAddress.country}
+                        onChange={handleNewAddressChange}
+                        className="input-field"
+                        placeholder="India"
+                        required
+                      />
+                    </div>
+
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 px-4 py-3 rounded-xl text-sm">
+                      <i className="fas fa-lightbulb mr-2"></i>
+                      <strong>Tip:</strong> Save this address to your account for faster checkout next time!
+                    </div>
+                  </div>
+                )}
+              </div>
+                    {savedAddresses.map((address) => (
+                      <div
+                        key={address.id}
+                        onClick={() => setSelectedAddressId(address.id)}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          selectedAddressId === address.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-gray-200 dark:border-slate-600 hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="radio"
+                            name="address"
+                            checked={selectedAddressId === address.id}
               {/* Customer Information */}
               <div className="card">
                 <h3 className="text-2xl font-bold mb-6 dark:text-white flex items-center gap-2">

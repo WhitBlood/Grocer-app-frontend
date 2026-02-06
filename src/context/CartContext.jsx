@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const CartContext = createContext()
 
@@ -48,8 +49,22 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('freshmart_cart', JSON.stringify(cart))
   }, [cart])
 
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = (product, quantity = 1, onAuthRequired) => {
+    // Check if user is logged in
+    const token = localStorage.getItem('freshmart_token')
+    const user = localStorage.getItem('freshmart_user')
+    
+    if (!token || !user) {
+      // User is not logged in, trigger auth required callback
+      if (onAuthRequired) {
+        onAuthRequired()
+      }
+      return false
+    }
+    
+    // User is logged in, add to cart
     dispatch({ type: 'ADD_TO_CART', payload: { ...product, quantity } })
+    return true
   }
 
   const updateQuantity = (cartId, quantity) => {

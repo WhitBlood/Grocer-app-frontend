@@ -8,7 +8,23 @@ const Navbar = ({ onSearch }) => {
   const { isDark, toggleTheme } = useTheme()
   const [searchTerm, setSearchTerm] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [user, setUser] = useState(null)
   const navigate = useNavigate()
+
+  // Check if user is logged in
+  React.useEffect(() => {
+    const userData = localStorage.getItem('freshmart_user')
+    if (userData) {
+      setUser(JSON.parse(userData))
+    }
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('freshmart_token')
+    localStorage.removeItem('freshmart_user')
+    setUser(null)
+    navigate('/')
+  }
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -68,6 +84,40 @@ const Navbar = ({ onSearch }) => {
           >
             {isDark ? "☀️" : "🌙"}
           </button>
+          
+          {/* Auth Buttons or User Menu */}
+          {user ? (
+            <div className="hidden md:flex items-center gap-3">
+              <Link
+                to="/my-addresses"
+                className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary transition-colors font-medium"
+              >
+                <i className="fas fa-map-marker-alt mr-1"></i>
+                Addresses
+              </Link>
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Hi, <span className="font-semibold">{user.username}</span>
+              </span>
+              <button
+                onClick={handleLogout}
+                className="btn-secondary text-sm px-4 py-2"
+              >
+                <i className="fas fa-sign-out-alt mr-2"></i>
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-3">
+              <Link to="/login" className="btn-secondary text-sm px-4 py-2">
+                <i className="fas fa-sign-in-alt mr-2"></i>
+                Login
+              </Link>
+              <Link to="/register" className="btn-primary text-sm px-4 py-2">
+                <i className="fas fa-user-plus mr-2"></i>
+                Sign Up
+              </Link>
+            </div>
+          )}
           
           {/* Cart Button */}
           <Link 

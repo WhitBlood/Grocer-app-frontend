@@ -1,27 +1,36 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import LoginPromptModal from './LoginPromptModal'
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart()
+  const navigate = useNavigate()
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const handleAddToCart = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    addToCart(product)
     
-    // Show notification
-    const notification = document.createElement('div')
-    notification.className = 'notification'
-    notification.innerHTML = `
-      <i class="fas fa-check-circle mr-2"></i>
-      ${product.name} added to cart!
-    `
-    document.body.appendChild(notification)
+    const success = addToCart(product, 1, () => {
+      // This callback is called when user is not logged in
+      setShowLoginModal(true)
+    })
     
-    setTimeout(() => {
-      document.body.removeChild(notification)
-    }, 3000)
+    if (success) {
+      // Show notification only if item was added successfully
+      const notification = document.createElement('div')
+      notification.className = 'notification'
+      notification.innerHTML = `
+        <i class="fas fa-check-circle mr-2"></i>
+        ${product.name} added to cart!
+      `
+      document.body.appendChild(notification)
+      
+      setTimeout(() => {
+        document.body.removeChild(notification)
+      }, 3000)
+    }
   }
 
   const getBadgeClass = (badge) => {
@@ -40,6 +49,8 @@ const ProductCard = ({ product }) => {
 
   return (
     <Link to={`/product/${product.id}`} className="block">
+      <LoginPromptModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      
       <div className="product-card overflow-hidden group">
         <div className="relative">
           <img 
