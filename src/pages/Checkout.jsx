@@ -392,21 +392,7 @@ const Checkout = () => {
                   </div>
                 )}
               </div>
-                    {savedAddresses.map((address) => (
-                      <div
-                        key={address.id}
-                        onClick={() => setSelectedAddressId(address.id)}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                          selectedAddressId === address.id
-                            ? 'border-primary bg-primary/5'
-                            : 'border-gray-200 dark:border-slate-600 hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <input
-                            type="radio"
-                            name="address"
-                            checked={selectedAddressId === address.id}
+
               {/* Customer Information */}
               <div className="card">
                 <h3 className="text-2xl font-bold mb-6 dark:text-white flex items-center gap-2">
