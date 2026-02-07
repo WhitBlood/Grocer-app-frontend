@@ -9,6 +9,7 @@ import About from './pages/About'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import MyAddresses from './pages/MyAddresses'
+import MyOrders from './pages/MyOrders'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -24,7 +25,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/my-addresses" element={<MyAddresses />} />
-            <Route path="*" element={<Not Found />} />
+            <Route path="/my-orders" element={<MyOrders />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
       </CartProvider>

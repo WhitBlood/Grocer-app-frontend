@@ -89,6 +89,13 @@ const Navbar = ({ onSearch }) => {
           {user ? (
             <div className="hidden md:flex items-center gap-3">
               <Link
+                to="/my-orders"
+                className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary transition-colors font-medium"
+              >
+                <i className="fas fa-shopping-bag mr-1"></i>
+                Orders
+              </Link>
+              <Link
                 to="/my-addresses"
                 className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary transition-colors font-medium"
               >
@@ -178,6 +185,26 @@ const Navbar = ({ onSearch }) => {
               >
                 About
               </Link>
+              {user && (
+                <>
+                  <Link 
+                    to="/my-orders" 
+                    className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <i className="fas fa-shopping-bag mr-2"></i>
+                    My Orders
+                  </Link>
+                  <Link 
+                    to="/my-addresses" 
+                    className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <i className="fas fa-map-marker-alt mr-2"></i>
+                    My Addresses
+                  </Link>
+                </>
+              )}
               <a 
                 href="#" 
                 className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors font-medium py-2"
