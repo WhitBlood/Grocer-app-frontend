@@ -42,7 +42,7 @@ const Login = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email,
+          username: formData.email,  // Backend accepts email in username field
           password: formData.password
         })
       })
