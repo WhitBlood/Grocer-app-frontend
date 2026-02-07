@@ -7,7 +7,7 @@ import API_BASE_URL from '../config/api'
 const Login = () => {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   })
   const [error, setError] = useState('')
@@ -42,7 +42,7 @@ const Login = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.username,
+          email: formData.email,
           password: formData.password
         })
       })
@@ -54,13 +54,10 @@ const Login = () => {
         localStorage.setItem('freshmart_token', data.access_token)
         localStorage.setItem('freshmart_user', JSON.stringify(data.user))
         
-        // Show success notification
-        alert('Login successful! Welcome back!')
-        
-        // Redirect to home
+        // Redirect to home (no alert popup)
         navigate('/')
       } else {
-        setError(data.detail || 'Invalid username or password')
+        setError(data.detail || 'Invalid email or password')
       }
     } catch (err) {
       setError('Failed to connect to server. Please try again.')
@@ -98,20 +95,20 @@ const Login = () => {
               )}
 
               <div>
-                <label htmlFor="username" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-user mr-2 text-primary"></i>
-                  Username
+                <label htmlFor="email" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-envelope mr-2 text-primary"></i>
+                  Email Address
                 </label>
                 <input
-                  id="username"
-                  name="username"
-                  type="text"
+                  id="email"
+                  name="email"
+                  type="email"
                   required
-                  value={formData.username}
+                  value={formData.email}
                   onChange={handleChange}
                   className="input-field"
-                  placeholder="Enter your username"
-                  autoComplete="username"
+                  placeholder="Enter your email"
+                  autoComplete="email"
                 />
               </div>
 
