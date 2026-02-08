@@ -169,10 +169,10 @@ const MyOrders = () => {
                   </div>
                   <div className="mt-4 md:mt-0 text-right">
                     <p className="text-2xl font-black text-primary">
-                      ₹{order.total_amount.toFixed(2)}
+                      ₹{order.total ? parseFloat(order.total).toFixed(2) : '0.00'}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                      {order.items?.length || 0} item{order.items?.length !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
@@ -189,12 +189,12 @@ const MyOrders = () => {
                           {item.product_name}
                         </h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Quantity: {item.quantity} × ₹{item.price.toFixed(2)}
+                          Quantity: {item.quantity} × ₹{parseFloat(item.product_price || item.price || 0).toFixed(2)}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-gray-900 dark:text-white">
-                          ₹{(item.quantity * item.price).toFixed(2)}
+                          ₹{(item.quantity * parseFloat(item.product_price || item.price || 0)).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -202,16 +202,16 @@ const MyOrders = () => {
                 </div>
 
                 {/* Delivery Address */}
-                {order.delivery_address && (
+                {(order.delivery_street || order.delivery_city) && (
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mb-4">
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
                       <i className="fas fa-map-marker-alt text-primary"></i>
                       Delivery Address
                     </h4>
                     <p className="text-sm text-gray-700 dark:text-gray-300">
-                      {order.delivery_address.street}, {order.delivery_address.city}
+                      {order.delivery_street}, {order.delivery_city}
                       <br />
-                      {order.delivery_address.state} {order.delivery_address.postal_code}
+                      {order.delivery_state} {order.delivery_postal_code}
                     </p>
                   </div>
                 )}
