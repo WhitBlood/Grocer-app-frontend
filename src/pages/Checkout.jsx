@@ -103,36 +103,21 @@ const Checkout = () => {
     }
     
     try {
-      let addressId = selectedAddressId
-
-      // If using new address, create it first
+      // Get the address to use
+      let addressToUse
+      
       if (useNewAddress) {
-        const addressResponse = await fetch(`${API_BASE_URL}/addresses/`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            label: 'Delivery Address',
-            street: newAddress.street,
-            city: newAddress.city,
-            state: newAddress.state,
-            postal_code: newAddress.postal_code,
-            country: newAddress.country,
-            is_default: savedAddresses.length === 0 // Make default if first address
-          })
-        })
-
-        if (!addressResponse.ok) {
-          throw new Error('Failed to save address')
+        addressToUse = newAddress
+      } else {
+        // Find the selected address from saved addresses
+        addressToUse = savedAddresses.find(addr => addr.id === selectedAddressId)
+        if (!addressToUse) {
+          alert('Please select a valid address')
+          return
         }
-
-        const savedAddress = await addressResponse.json()
-        addressId = savedAddress.id
       }
 
-      // Create order
+      // Create order with address fields
       const orderItems = cart.map(item => ({
         product_id: item.id,
         quantity: item.quantity
@@ -146,7 +131,13 @@ const Checkout = () => {
         },
         body: JSON.stringify({
           items: orderItems,
-          delivery_address_id: addressId
+          delivery_street: addressToUse.street,
+          delivery_city: addressToUse.city,
+          delivery_state: addressToUse.state,
+          delivery_postal_code: addressToUse.postal_code,
+          delivery_country: addressToUse.country || 'India',
+          delivery_instructions: addressToUse.delivery_instructions || null,
+          payment_method: paymentMethod
         })
       })
 
@@ -156,7 +147,7 @@ const Checkout = () => {
       }
 
       const order = await orderResponse.json()
-      console.log('Order created:', order)
+      console.log('✅ Order created:', order)
 
       // Show success and redirect
       setShowSuccess(true)
@@ -165,7 +156,7 @@ const Checkout = () => {
         navigate('/my-orders')
       }, 2000)
     } catch (error) {
-      console.error('Order error:', error)
+      console.error('❌ Order error:', error)
       alert(`Failed to place order: ${error.message}`)
     }
   }
