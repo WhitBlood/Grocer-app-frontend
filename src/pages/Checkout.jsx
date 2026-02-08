@@ -35,42 +35,54 @@ const Checkout = () => {
 
   const fetchAddresses = async () => {
     const token = localStorage.getItem('freshmart_token')
+    console.log('🔍 Fetching addresses...')
+    console.log('🔑 Token exists:', !!token)
+    
     if (!token) {
-      // Not logged in, use new address form
+      console.log('❌ No token, showing new address form')
       setUseNewAddress(true)
       return
     }
 
     try {
+      console.log('📍 API URL:', API_BASE_URL)
       const response = await fetch(`${API_BASE_URL}/addresses/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
 
+      console.log('📊 Response status:', response.status)
+
       if (response.ok) {
         const addresses = await response.json()
+        console.log('✅ Addresses loaded:', addresses.length, 'addresses')
+        console.log('📦 Addresses data:', addresses)
         setSavedAddresses(addresses)
         
         // If no addresses, enable new address form
         if (addresses.length === 0) {
+          console.log('ℹ️ No addresses found, showing new address form')
           setUseNewAddress(true)
         } else {
+          console.log('✅ Addresses found, selecting default')
           // Auto-select default address
           const defaultAddress = addresses.find(addr => addr.is_default)
           if (defaultAddress) {
+            console.log('✅ Default address selected:', defaultAddress.id)
             setSelectedAddressId(defaultAddress.id)
           } else {
             // Select first address if no default
+            console.log('✅ First address selected:', addresses[0].id)
             setSelectedAddressId(addresses[0].id)
           }
         }
       } else {
-        console.error('Failed to load addresses')
+        console.error('❌ Failed to load addresses, status:', response.status)
         setUseNewAddress(true)
       }
     } catch (error) {
-      console.error('Error fetching addresses:', error)
+      console.error('❌ Error fetching addresses:', error)
       setUseNewAddress(true)
     }
   }

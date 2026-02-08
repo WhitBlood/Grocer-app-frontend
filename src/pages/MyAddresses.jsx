@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import LoadingSpinner from '../components/LoadingSpinner'
+import API_BASE_URL from '../config/api'
 
 const MyAddresses = () => {
   const navigate = useNavigate()
   const [addresses, setAddresses] = useState([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingAddress, setEditingAddress] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     label: 'Home',
     street: '',
@@ -29,10 +33,35 @@ const MyAddresses = () => {
       return
     }
 
-    // Load addresses from localStorage
-    const savedAddresses = JSON.parse(localStorage.getItem('freshmart_addresses')) || []
-    setAddresses(savedAddresses)
+    fetchAddresses()
   }, [navigate])
+
+  const fetchAddresses = async () => {
+    try {
+      const token = localStorage.getItem('freshmart_token')
+      const response = await fetch(`${API_BASE_URL}/addresses/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAddresses(data)
+      } else if (response.status === 401) {
+        localStorage.removeItem('freshmart_token')
+        localStorage.removeItem('freshmart_user')
+        navigate('/login')
+      } else {
+        setError('Failed to load addresses')
+      }
+    } catch (err) {
+      setError('Failed to connect to server')
+      console.error('Error fetching addresses:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -42,77 +71,129 @@ const MyAddresses = () => {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
     
-    let updatedAddresses
-    
-    if (editingAddress !== null) {
-      // Update existing address
-      updatedAddresses = addresses.map((addr, index) => 
-        index === editingAddress ? { ...formData, id: addr.id } : addr
-      )
-    } else {
-      // Add new address
-      const newAddress = {
-        ...formData,
-        id: Date.now()
+    try {
+      const token = localStorage.getItem('freshmart_token')
+      
+      if (editingAddress !== null) {
+        // Update existing address
+        const response = await fetch(`${API_BASE_URL}/addresses/${editingAddress.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        })
+
+        if (response.ok) {
+          await fetchAddresses()
+        } else {
+          setError('Failed to update address')
+        }
+      } else {
+        // Create new address
+        const response = await fetch(`${API_BASE_URL}/addresses/`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        })
+
+        if (response.ok) {
+          await fetchAddresses()
+        } else {
+          setError('Failed to save address')
+        }
       }
-      updatedAddresses = [...addresses, newAddress]
-    }
 
-    // If this is set as default, remove default from others
-    if (formData.is_default) {
-      updatedAddresses = updatedAddresses.map((addr, index) => ({
-        ...addr,
-        is_default: editingAddress !== null ? index === editingAddress : addr.id === updatedAddresses[updatedAddresses.length - 1].id
-      }))
+      // Reset form
+      setFormData({
+        label: 'Home',
+        street: '',
+        city: '',
+        state: '',
+        postal_code: '',
+        country: 'India',
+        is_default: false,
+        delivery_instructions: ''
+      })
+      setShowAddForm(false)
+      setEditingAddress(null)
+    } catch (err) {
+      setError('Failed to connect to server')
+      console.error('Error saving address:', err)
     }
-
-    setAddresses(updatedAddresses)
-    localStorage.setItem('freshmart_addresses', JSON.stringify(updatedAddresses))
-    
-    // Reset form
-    setFormData({
-      label: 'Home',
-      street: '',
-      city: '',
-      state: '',
-      postal_code: '',
-      country: 'India',
-      is_default: false,
-      delivery_instructions: ''
-    })
-    setShowAddForm(false)
-    setEditingAddress(null)
   }
 
-  const handleEdit = (index) => {
-    setEditingAddress(index)
-    setFormData(addresses[index])
+  const handleEdit = (address) => {
+    setEditingAddress(address)
+    setFormData({
+      label: address.label,
+      street: address.street,
+      city: address.city,
+      state: address.state,
+      postal_code: address.postal_code,
+      country: address.country,
+      is_default: address.is_default,
+      delivery_instructions: address.delivery_instructions || ''
+    })
     setShowAddForm(true)
   }
 
-  const handleDelete = (index) => {
+  const handleDelete = async (addressId) => {
     if (window.confirm('Are you sure you want to delete this address?')) {
-      const updatedAddresses = addresses.filter((_, i) => i !== index)
-      setAddresses(updatedAddresses)
-      localStorage.setItem('freshmart_addresses', JSON.stringify(updatedAddresses))
+      try {
+        const token = localStorage.getItem('freshmart_token')
+        const response = await fetch(`${API_BASE_URL}/addresses/${addressId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (response.ok || response.status === 204) {
+          await fetchAddresses()
+        } else {
+          setError('Failed to delete address')
+        }
+      } catch (err) {
+        setError('Failed to connect to server')
+        console.error('Error deleting address:', err)
+      }
     }
   }
 
-  const handleSetDefault = (index) => {
-    const updatedAddresses = addresses.map((addr, i) => ({
-      ...addr,
-      is_default: i === index
-    }))
-    setAddresses(updatedAddresses)
-    localStorage.setItem('freshmart_addresses', JSON.stringify(updatedAddresses))
+  const handleSetDefault = async (addressId) => {
+    try {
+      const token = localStorage.getItem('freshmart_token')
+      const response = await fetch(`${API_BASE_URL}/addresses/${addressId}/set-default`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        await fetchAddresses()
+      } else {
+        setError('Failed to set default address')
+      }
+    } catch (err) {
+      setError('Failed to connect to server')
+      console.error('Error setting default address:', err)
+    }
   }
 
   const handleCancel = () => {
     setShowAddForm(false)
     setEditingAddress(null)
+    setError('')
     setFormData({
       label: 'Home',
       street: '',
@@ -123,6 +204,17 @@ const MyAddresses = () => {
       is_default: false,
       delivery_instructions: ''
     })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <div className="flex items-center justify-center py-20">
+          <LoadingSpinner size="large" text="Loading addresses..." />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -157,6 +249,13 @@ const MyAddresses = () => {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               {editingAddress !== null ? 'Edit Address' : 'Add New Address'}
             </h2>
+            
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl mb-6 flex items-center">
+                <i className="fas fa-exclamation-circle mr-2"></i>
+                {error}
+              </div>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
@@ -323,7 +422,7 @@ const MyAddresses = () => {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
-            {addresses.map((address, index) => (
+            {addresses.map((address) => (
               <div
                 key={address.id}
                 className={`bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-lg p-6 border-2 transition-all ${
@@ -355,14 +454,14 @@ const MyAddresses = () => {
                   
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleEdit(index)}
+                      onClick={() => handleEdit(address)}
                       className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all"
                       title="Edit"
                     >
                       <i className="fas fa-edit"></i>
                     </button>
                     <button
-                      onClick={() => handleDelete(index)}
+                      onClick={() => handleDelete(address.id)}
                       className="w-8 h-8 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-all"
                       title="Delete"
                     >
@@ -394,7 +493,7 @@ const MyAddresses = () => {
 
                 {!address.is_default && (
                   <button
-                    onClick={() => handleSetDefault(index)}
+                    onClick={() => handleSetDefault(address.id)}
                     className="mt-4 w-full py-2 text-sm border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-white transition-all"
                   >
                     Set as Default
