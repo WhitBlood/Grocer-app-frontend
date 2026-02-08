@@ -27,23 +27,37 @@ const MyOrders = () => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('freshmart_token')
+      console.log('🔍 Fetching orders...')
+      console.log('📍 API URL:', API_BASE_URL)
+      console.log('🔑 Token exists:', !!token)
+      console.log('🔑 Token preview:', token ? token.substring(0, 50) + '...' : 'No token')
+      
       const response = await fetch(`${API_BASE_URL}/orders/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
 
+      console.log('📊 Response status:', response.status)
+      console.log('📊 Response ok:', response.ok)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Orders loaded:', data.length, 'orders')
         setOrders(data)
       } else if (response.status === 401) {
+        console.error('❌ 401 Unauthorized - Token invalid or expired')
+        const errorData = await response.json()
+        console.error('Error details:', errorData)
         localStorage.removeItem('freshmart_token')
         localStorage.removeItem('freshmart_user')
         navigate('/login')
       } else {
+        console.error('❌ Failed to load orders:', response.status)
         setError('Failed to load orders')
       }
     } catch (err) {
+      console.error('❌ Network error:', err)
       setError('Failed to connect to server')
       console.error('Error fetching orders:', err)
     } finally {
