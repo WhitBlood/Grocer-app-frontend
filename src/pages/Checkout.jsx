@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
+import API_BASE_URL from '../config/api'
 
 const Checkout = () => {
   const navigate = useNavigate()
@@ -28,29 +29,67 @@ const Checkout = () => {
   useEffect(() => {
     document.title = '🛒 Checkout | FreshMart - Premium Grocery Experience'
     
-    // Load saved addresses
-    const addresses = JSON.parse(localStorage.getItem('freshmart_addresses')) || []
-    setSavedAddresses(addresses)
-    
-    // If no addresses, enable new address form
-    if (addresses.length === 0) {
-      setUseNewAddress(true)
-    } else {
-      // Auto-select default address
-      const defaultAddress = addresses.find(addr => addr.is_default)
-      if (defaultAddress) {
-        setSelectedAddressId(defaultAddress.id)
-      }
-    }
+    // Load saved addresses from backend API
+    fetchAddresses()
   }, [])
+
+  const fetchAddresses = async () => {
+    const token = localStorage.getItem('freshmart_token')
+    if (!token) {
+      // Not logged in, use new address form
+      setUseNewAddress(true)
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/addresses/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const addresses = await response.json()
+        setSavedAddresses(addresses)
+        
+        // If no addresses, enable new address form
+        if (addresses.length === 0) {
+          setUseNewAddress(true)
+        } else {
+          // Auto-select default address
+          const defaultAddress = addresses.find(addr => addr.is_default)
+          if (defaultAddress) {
+            setSelectedAddressId(defaultAddress.id)
+          } else {
+            // Select first address if no default
+            setSelectedAddressId(addresses[0].id)
+          }
+        }
+      } else {
+        console.error('Failed to load addresses')
+        setUseNewAddress(true)
+      }
+    } catch (error) {
+      console.error('Error fetching addresses:', error)
+      setUseNewAddress(true)
+    }
+  }
 
   const subtotal = getTotalPrice()
   const deliveryFee = subtotal > 500 ? 0 : 49
   const tax = Math.round(subtotal * 0.05)
   const total = subtotal + deliveryFee + tax
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Check if user is logged in
+    const token = localStorage.getItem('freshmart_token')
+    if (!token) {
+      alert('Please login to place an order')
+      navigate('/login')
+      return
+    }
     
     // Validate address selection or new address entry
     if (!useNewAddress && !selectedAddressId) {
@@ -63,11 +102,72 @@ const Checkout = () => {
       return
     }
     
-    setShowSuccess(true)
-    setTimeout(() => {
-      clearCart()
-      navigate('/')
-    }, 3000)
+    try {
+      let addressId = selectedAddressId
+
+      // If using new address, create it first
+      if (useNewAddress) {
+        const addressResponse = await fetch(`${API_BASE_URL}/addresses/`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            label: 'Delivery Address',
+            street: newAddress.street,
+            city: newAddress.city,
+            state: newAddress.state,
+            postal_code: newAddress.postal_code,
+            country: newAddress.country,
+            is_default: savedAddresses.length === 0 // Make default if first address
+          })
+        })
+
+        if (!addressResponse.ok) {
+          throw new Error('Failed to save address')
+        }
+
+        const savedAddress = await addressResponse.json()
+        addressId = savedAddress.id
+      }
+
+      // Create order
+      const orderItems = cart.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity
+      }))
+
+      const orderResponse = await fetch(`${API_BASE_URL}/orders/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          items: orderItems,
+          delivery_address_id: addressId
+        })
+      })
+
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json()
+        throw new Error(errorData.detail || 'Failed to create order')
+      }
+
+      const order = await orderResponse.json()
+      console.log('Order created:', order)
+
+      // Show success and redirect
+      setShowSuccess(true)
+      setTimeout(() => {
+        clearCart()
+        navigate('/my-orders')
+      }, 2000)
+    } catch (error) {
+      console.error('Order error:', error)
+      alert(`Failed to place order: ${error.message}`)
+    }
   }
 
   const handleNewAddressChange = (e) => {
