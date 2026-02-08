@@ -218,19 +218,12 @@ const MyOrders = () => {
 
                 {/* Order Actions */}
                 <div className="flex gap-3">
-                  <button
-                    onClick={() => navigate(`/order/${order.id}`)}
-                    className="flex-1 py-2 px-4 bg-primary text-white rounded-xl font-semibold hover:bg-primary/80 transition-all"
-                  >
-                    <i className="fas fa-eye mr-2"></i>
-                    View Details
-                  </button>
                   {order.status === 'pending' && (
                     <button
-                      className="py-2 px-4 border-2 border-red-500 text-red-500 rounded-xl font-semibold hover:bg-red-500 hover:text-white transition-all"
+                      className="flex-1 py-2 px-4 border-2 border-red-500 text-red-500 rounded-xl font-semibold hover:bg-red-500 hover:text-white transition-all"
                     >
                       <i className="fas fa-times mr-2"></i>
-                      Cancel
+                      Cancel Order
                     </button>
                   )}
                 </div>
